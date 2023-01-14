@@ -24,75 +24,83 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MovieService {
 
-    private final MovieRepository movieRepository;
-    private final ModelMapper modelMapper;
-    private final ProjectionRepository projectionRepository;
+	private final MovieRepository movieRepository;
+	private final ModelMapper modelMapper;
+	private final ProjectionRepository projectionRepository;
 
-    public MovieInfoDTO getMovieInfo(int mid) {
-        Optional<Movie> movie = movieRepository.findById(mid);
+	public List<MovieInfoDTO> getAllMoviesInfo() {
+		return movieRepository
+				.findAll()
+				.stream()
+				.map(movie -> modelMapper.map(movie, MovieInfoDTO.class))
+				.collect(Collectors.toList());
+	}
 
-        if (movie.isPresent()) {
-            Movie m = movie.get();
+	public MovieInfoDTO getMovieInfo(int mid) {
+		Optional<Movie> movie = movieRepository.findById(mid);
 
-            MovieInfoDTO dto = modelMapper.map(m, MovieInfoDTO.class);
+		if (movie.isPresent()) {
+			Movie m = movie.get();
 
-            List<ProjectionWithHallDTO> withHall = getProjections(dto);
-            dto.setProjections(withHall.stream()
-                    .map(p -> modelMapper.map(p, ProjectionWithoutHallDTO.class)).collect(Collectors.toList()));
+			MovieInfoDTO dto = modelMapper.map(m, MovieInfoDTO.class);
 
-            sortProjections(dto);
+			List<ProjectionWithHallDTO> withHall = getProjections(dto);
+			dto.setProjections(withHall.stream()
+					.map(p -> modelMapper.map(p, ProjectionWithoutHallDTO.class)).collect(Collectors.toList()));
 
-            return dto;
-        } else {
-            throw new NotFoundException("Movie is not found!");
-        }
-    }
+			sortProjections(dto);
 
-    private void sortProjections(MovieInfoDTO dto) {
-        Collections.sort(dto.getProjections(), new Comparator<ProjectionWithoutHallDTO>() {
-            @Override
+			return dto;
+		} else {
+			throw new NotFoundException("Movie is not found!");
+		}
+	}
 
-            public int compare(ProjectionWithoutHallDTO o1, ProjectionWithoutHallDTO o2) {
-                if (o2.getCinema().getName().compareTo(o1.getCinema().getName()) == 0) {
-                    if (o2.getDate().compareTo(o1.getDate()) == 0) {
-                        if (o2.getProjectionType().getType().compareTo(o1.getProjectionType().getType()) == 0) {
-                            if (o2.getStartTime().compareTo(o1.getStartTime()) == 0) {
-                                return 0;
-                            } else if (o2.getStartTime().compareTo(o1.getStartTime()) < 0) {
-                                return -1;
-                            } else {
-                                return 1;
-                            }
-                        } else if (o2.getProjectionType().getType().compareTo(o1.getProjectionType().getType()) < 0) {
-                            return -1;
-                        } else {
-                            return 1;
-                        }
-                    } else if (o2.getDate().compareTo(o1.getDate()) < 0) {
-                        return -1;
-                    } else {
-                        return 1;
-                    }
-                } else if (o2.getCinema().getName().compareTo(o1.getCinema().getName()) < 0) {
-                    return -1;
-                } else {
-                    return 1;
-                }
-            }
-        });
-    }
+	private void sortProjections(MovieInfoDTO dto) {
+		Collections.sort(dto.getProjections(), new Comparator<ProjectionWithoutHallDTO>() {
+			@Override
 
-    private List<ProjectionWithHallDTO> getProjections(MovieInfoDTO dto) {
-        int movieId = dto.getId();
+			public int compare(ProjectionWithoutHallDTO o1, ProjectionWithoutHallDTO o2) {
+				if (o2.getCinema().getName().compareTo(o1.getCinema().getName()) == 0) {
+					if (o2.getDate().compareTo(o1.getDate()) == 0) {
+						if (o2.getProjectionType().getType().compareTo(o1.getProjectionType().getType()) == 0) {
+							if (o2.getStartTime().compareTo(o1.getStartTime()) == 0) {
+								return 0;
+							} else if (o2.getStartTime().compareTo(o1.getStartTime()) < 0) {
+								return -1;
+							} else {
+								return 1;
+							}
+						} else if (o2.getProjectionType().getType().compareTo(o1.getProjectionType().getType()) < 0) {
+							return -1;
+						} else {
+							return 1;
+						}
+					} else if (o2.getDate().compareTo(o1.getDate()) < 0) {
+						return -1;
+					} else {
+						return 1;
+					}
+				} else if (o2.getCinema().getName().compareTo(o1.getCinema().getName()) < 0) {
+					return -1;
+				} else {
+					return 1;
+				}
+			}
+		});
+	}
 
-        List<Projection> projections = projectionRepository.findAllByMovieId(movieId);
+	private List<ProjectionWithHallDTO> getProjections(MovieInfoDTO dto) {
+		int movieId = dto.getId();
 
-        List<ProjectionWithHallDTO> withHall = projections.stream()
-                .map(p -> modelMapper.map(p, ProjectionWithHallDTO.class)).collect(Collectors.toList());
+		List<Projection> projections = projectionRepository.findAllByMovieId(movieId);
 
-        withHall.stream()
-                .forEach(p -> p.setCinema(modelMapper.map(p.getHall().getCinema(), CinemaInfoResponseDTO.class)));
+		List<ProjectionWithHallDTO> withHall = projections.stream()
+				.map(p -> modelMapper.map(p, ProjectionWithHallDTO.class)).collect(Collectors.toList());
 
-        return withHall;
-    }
+		withHall.stream()
+				.forEach(p -> p.setCinema(modelMapper.map(p.getHall().getCinema(), CinemaInfoResponseDTO.class)));
+
+		return withHall;
+	}
 }

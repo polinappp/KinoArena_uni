@@ -5,12 +5,14 @@ import com.kinoarena.kinoarena.model.exceptions.BadRequestException;
 import com.kinoarena.kinoarena.model.exceptions.NotFoundException;
 import com.kinoarena.kinoarena.model.exceptions.UnauthorizedException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import javax.naming.AuthenticationException;
 import java.time.LocalDateTime;
 
+@CrossOrigin
 public abstract class AbstractController {
 
     @ExceptionHandler(value = BadRequestException.class)
